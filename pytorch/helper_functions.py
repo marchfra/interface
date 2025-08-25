@@ -15,7 +15,7 @@ def train(
     verbose: bool = False,
 ) -> float:
     """Train the model for one epoch."""
-    size = len(dataloader.dataset)
+    size = len(dataloader.dataset)  # pyright: ignore[reportArgumentType]
     model.train()
 
     train_loss: float = 0
@@ -35,8 +35,8 @@ def train(
 
         # Print progress (11 updates total)
         if verbose and batch % (0.1 * size // x.shape[0]) == 0:
-            loss, current = loss.item(), batch * len(x)
-            print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+            batch_loss, current = loss.item(), batch * len(x)
+            print(f"loss: {batch_loss:>7f} [{current:>5d}/{size:>5d}]")
 
     return train_loss / len(dataloader)
 
@@ -49,7 +49,7 @@ def test_classification(
     verbose: bool = False,  # noqa: PT028
 ) -> tuple[float, float]:
     """Test the trained model on a classification task."""
-    size = len(dataloader.dataset)
+    size = len(dataloader.dataset)  # pyright: ignore[reportArgumentType]
     num_batches = len(dataloader)
 
     model.eval()
@@ -94,3 +94,48 @@ def test_regression(
         print(f"Test Error:\n    Avg loss: {test_loss:>8f}\n")
 
     return test_loss
+
+
+def train_classification(  # noqa: PLR0913
+    model: nn.Module,
+    train_dataloader: DataLoader,
+    test_dataloader: DataLoader,
+    learning_rate: float,
+    epochs: int = 50,
+    *,
+    verbose: bool = False,
+) -> tuple[list[float], list[float], list[float]]:
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+    train_losses: list[float] = []
+    test_losses: list[float] = []
+    accuracies: list[float] = []
+
+    for epoch in range(epochs):
+        # Halve learning rate after half epochs
+        if epoch == int(epochs / 2):
+            optimizer.param_groups[0]["lr"] = learning_rate / 2
+
+        epoch_loss = train(train_dataloader, model, loss_fn, optimizer, verbose=verbose)
+        test_loss, accuracy = test_classification(
+            test_dataloader,
+            model,
+            loss_fn,
+            verbose=verbose,
+        )
+
+        if verbose:
+            print(
+                f"Epoch {epoch + 1:2}/{epochs} - "
+                f"Accuracy: {(100 * accuracy):>0.1f}%, Avg loss: {test_loss:>8f}",
+            )
+
+        train_losses.append(epoch_loss)
+        test_losses.append(test_loss)
+        accuracies.append(accuracy)
+
+    if verbose:
+        print("Done!")
+
+    return train_losses, test_losses, accuracies
