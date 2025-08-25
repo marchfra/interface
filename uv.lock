@@ -356,8 +356,8 @@ wheels = [
 
 [[package]]
 name = "mfnet"
-version = "0.1.0"
-source = { git = "https://github.com/marchfra/mfnet#d4db70b32788a54a57033a210720547920b4488e" }
+version = "1.0.0"
+source = { git = "https://github.com/marchfra/mfnet#a50fba70dd7ed0e34bef1c003df698cc0805dc70" }
 dependencies = [
     { name = "numpy" },
 ]
