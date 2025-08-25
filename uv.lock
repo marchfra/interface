@@ -357,7 +357,7 @@ wheels = [
 [[package]]
 name = "mfnet"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/marchfra/mfnet#d4db70b32788a54a57033a210720547920b4488e" }
+source = { git = "https://github.com/marchfra/mfnet#d4db70b32788a54a57033a210720547920b4488e" }
 dependencies = [
     { name = "numpy" },
 ]
@@ -381,7 +381,7 @@ dependencies = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=6.30.1" },
     { name = "matplotlib", specifier = ">=3.10.5" },
-    { name = "mfnet", git = "ssh://git@github.com/marchfra/mfnet" },
+    { name = "mfnet", git = "https://github.com/marchfra/mfnet" },
     { name = "numpy", specifier = "<2" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "seaborn", specifier = ">=0.13.2" },

@@ -16,5 +16,5 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-mfnet = { git = "ssh://git@github.com/marchfra/mfnet" }
+mfnet = { git = "https://github.com/marchfra/mfnet" }
 # mfnet = { path = "../mfnet", editable = true }
