@@ -1,0 +1,96 @@
+import torch
+from torch import Tensor, nn
+from torch.utils.data import DataLoader
+
+# Check if GPU is available and set device accordingly
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+
+def train(
+    dataloader: DataLoader,
+    model: nn.Module,
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    *,
+    verbose: bool = False,
+) -> float:
+    """Train the model for one epoch."""
+    size = len(dataloader.dataset)
+    model.train()
+
+    train_loss: float = 0
+
+    for batch, (x, y) in enumerate(dataloader):
+        x[:], y[:] = x.to(device), y.to(device)
+        optimizer.zero_grad()
+
+        # Compute prediction error
+        y_pred = model(x)
+        loss: Tensor = loss_fn(y_pred, y)
+        train_loss += loss.item()
+
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
+
+        # Print progress (11 updates total)
+        if verbose and batch % (0.1 * size // x.shape[0]) == 0:
+            loss, current = loss.item(), batch * len(x)
+            print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+
+    return train_loss / len(dataloader)
+
+
+def test_classification(
+    dataloader: DataLoader,
+    model: nn.Module,
+    loss_fn: nn.Module,
+    *,
+    verbose: bool = False,  # noqa: PT028
+) -> tuple[float, float]:
+    """Test the trained model on a classification task."""
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+
+    model.eval()
+    test_loss: float = 0
+    accuracy: float = 0
+    with torch.no_grad():
+        for x, y in dataloader:
+            x[:], y[:] = x.to(device), y.to(device)
+            y_pred = model(x)
+            test_loss += loss_fn(y_pred, y).item()
+            accuracy += (y_pred.argmax(1) == y).type(torch.float).sum().item()
+    test_loss /= num_batches
+    accuracy /= size
+    if verbose:
+        print(
+            f"Test Error:\n    "
+            f"Accuracy: {(100 * accuracy):>0.1f}%, Avg loss: {test_loss:>8f}\n",
+        )
+
+    return test_loss, accuracy
+
+
+def test_regression(
+    dataloader: DataLoader,
+    model: nn.Module,
+    loss_fn: nn.Module,
+    *,
+    verbose: bool = False,  # noqa: PT028
+) -> float:
+    """Test the trained model on a regression task."""
+    num_batches = len(dataloader)
+
+    model.eval()
+    test_loss: float = 0
+    with torch.no_grad():
+        for x, y in dataloader:
+            x[:], y[:] = x.to(device), y.to(device)
+            y_pred = model(x)
+            test_loss += loss_fn(y_pred, y).item()
+    test_loss /= num_batches
+    if verbose:
+        print(f"Test Error:\n    Avg loss: {test_loss:>8f}\n")
+
+    return test_loss
