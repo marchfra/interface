@@ -139,3 +139,50 @@ def train_classification(  # noqa: PLR0913
         print("Done!")
 
     return train_losses, test_losses, accuracies
+
+
+def train_regression(  # noqa: PLR0913
+    model: nn.Module,
+    train_dataloader: DataLoader,
+    test_dataloader: DataLoader,
+    learning_rate: float,
+    epochs: int = 50,
+    test_interval: int = 1,
+    *,
+    verbose: bool = False,
+) -> tuple[list[float], list[float]]:
+    loss_fn = nn.MSELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+    train_losses: list[float] = []
+    test_losses: list[float] = []
+
+    for epoch in range(epochs):
+        # Halve learning rate after half epochs
+        if epoch == int(epochs / 2):
+            optimizer.param_groups[0]["lr"] = learning_rate / 2
+
+        epoch_loss = train(train_dataloader, model, loss_fn, optimizer, verbose=verbose)
+        train_losses.append(epoch_loss)
+        if epoch % test_interval == 0:
+            test_loss = test_regression(
+                test_dataloader,
+                model,
+                loss_fn,
+                verbose=verbose,
+            )
+            test_losses.append(test_loss)
+
+        # print(f"Epoch {epoch + 1:2}/{epochs} - Avg loss: {test_loss:>8f}")
+
+    if (epochs - 1) % test_interval != 0:
+        test_loss = test_regression(
+            test_dataloader,
+            model,
+            loss_fn,
+            verbose=verbose,
+        )
+        test_losses.append(test_loss)
+    # print("Done!")
+
+    return train_losses, test_losses
